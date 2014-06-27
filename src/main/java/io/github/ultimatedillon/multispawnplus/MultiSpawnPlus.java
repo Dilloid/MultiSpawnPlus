@@ -44,28 +44,55 @@ public final class MultiSpawnPlus extends JavaPlugin {
 				}
 				
 				if (args[0].equalsIgnoreCase("add")) {
-					if (args.length < 2) {
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a name for this spawnpoint."));
-					} else if (args.length > 2) {
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
-						return false;
-					} else if (!getConfig().contains("spawns." + args[1])) {
-						getConfig().set("spawns." + args[1] + ".world", player.getWorld().getName());
-						getConfig().set("spawns." + args[1] + "X", player.getLocation().getBlockX());
-						getConfig().set("spawns." + args[1] + "Y", player.getLocation().getBlockY());
-						getConfig().set("spawns." + args[1] + "Z", player.getLocation().getBlockZ());
-						saveConfig();
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bSpawnpoint &f" + args[1] + " &bhas been created!"));
+					if (player.hasPermission("multispawnplus.delete")) {
+						if (args.length < 2) {
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a name for this spawnpoint."));
+						} else if (args.length > 2) {
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
+							return false;
+						} else if (!getConfig().contains("spawns." + args[1])) {
+							getConfig().set("spawns." + args[1] + ".world", player.getWorld().getName());
+							getConfig().set("spawns." + args[1] + ".X", player.getLocation().getBlockX());
+							getConfig().set("spawns." + args[1] + ".Y", player.getLocation().getBlockY());
+							getConfig().set("spawns." + args[1] + ".Z", player.getLocation().getBlockZ());
+							saveConfig();
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bSpawnpoint &f" + args[1] + " &bhas been created!"));
+						} else {
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cA spawnpoint with that name already exists!"));
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cUse &f/multispawnplus delete <name> &bto delete existing spawnpoints."));
+						}
 					} else {
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cA spawnpoint with that name already exists!"));
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cUse &f/multispawnplus del <name> &bto delete existing spawnpoints."));
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
 					}
-//				} else if (args[0].equalsIgnoreCase("spawn")) {
-//					if (args.length < 2) {
-//						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a valid spawnpoint name."));
-//					}
+				
+				} else if (args[0].equalsIgnoreCase("delete")) {
+					if (player.hasPermission("multispawnplus.delete")) {
+						if (args.length < 2) {
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a spawnpoint to delete."));
+						} else if (args.length > 2) {
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
+							return false;
+						} else {
+							if (getConfig().contains(args[1])) {
+								getConfig().set("spawns." + args[1], null);
+								saveConfig();
+								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bSpawnpoint &f" + args[1] + " &bdeleted."));
+							} else {
+								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat spawnpoint doesn't exist."));
+							}
+						}
+					} else {
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
+					}
+				
 				} else if (args[0].equalsIgnoreCase("reload")) {
-					reloadConfig();
+					if (player.hasPermission("multispawnplus.reload")) {
+						reloadConfig();
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bMultiSpawnPlus config reloaded!"));
+					} else {
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
+					}
+				
 				} else {
 					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cInvalid argument!"));
 					return false;
