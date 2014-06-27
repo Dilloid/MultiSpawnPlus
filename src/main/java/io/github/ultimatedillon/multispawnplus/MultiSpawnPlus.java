@@ -1,7 +1,11 @@
 package io.github.ultimatedillon.multispawnplus;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.World;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class MultiSpawnPlus extends JavaPlugin {
@@ -28,5 +32,51 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		
 		getConfig().options().copyDefaults(true);
         saveConfig();
+	}
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		if (cmd.getName().equalsIgnoreCase("multispawnplus")) {
+			if (sender instanceof Player) {
+				Player player = (Player) sender;
+				if (args.length < 1) {
+					return false;
+				}
+				
+				if (args[0].equalsIgnoreCase("add")) {
+					if (args.length < 2) {
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a name for this spawnpoint."));
+					} else if (args.length > 2) {
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
+						return false;
+					} else if (!getConfig().contains("spawns." + args[1])) {
+						getConfig().set("spawns." + args[1] + ".world", player.getWorld().getName());
+						getConfig().set("spawns." + args[1] + "X", player.getLocation().getBlockX());
+						getConfig().set("spawns." + args[1] + "Y", player.getLocation().getBlockY());
+						getConfig().set("spawns." + args[1] + "Z", player.getLocation().getBlockZ());
+						saveConfig();
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bSpawnpoint &f" + args[1] + " &bhas been created!"));
+					} else {
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cA spawnpoint with that name already exists!"));
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cUse &f/multispawnplus del <name> &bto delete existing spawnpoints."));
+					}
+//				} else if (args[0].equalsIgnoreCase("spawn")) {
+//					if (args.length < 2) {
+//						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a valid spawnpoint name."));
+//					}
+				} else if (args[0].equalsIgnoreCase("reload")) {
+					reloadConfig();
+				} else {
+					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cInvalid argument!"));
+					return false;
+				}
+			} else {
+				sender.sendMessage("This command can only be run by a player");
+			}
+			
+			return true;
+		}
+		
+		return false;
 	}
 }
