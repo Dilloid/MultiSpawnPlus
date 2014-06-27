@@ -1,5 +1,15 @@
 name: MultiSpawnPlus
 main: io.github.ultimatedillon.multispawnplus.MultiSpawnPlus
-version: 0.1.0
+version: 0.1.2
 author: UltimateDillon
 description: MultiSpawnPlus
+commands:
+  multispawnplus:
+    description: The base command for all things MultiSpawnPlus.
+    aliases: [msp]
+    usage:  |
+            Usage:
+            /<command> add <name>
+            /<command> del <name>
+            /<command> spawn <name>
+            /<command> reload
