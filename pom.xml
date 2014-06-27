@@ -3,7 +3,6 @@
   <groupId>io.github.ultimatedillon</groupId>
   <artifactId>MultiSpawnPlus</artifactId>
   <version>0.0.1</version>
-</project>
   
   <build>
     <plugins>
