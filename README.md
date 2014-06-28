@@ -20,4 +20,4 @@
 </ul>
 
 <h4>Questions?</h4>
-<p>Email me at <a href="mailto:freetheenslaved@gmail.com" alt="Email Me">freetheenslaved@gmail.com</a></p>
+<p>Email me bug reports and questions at <a href="mailto:freetheenslaved@gmail.com" alt="Email Me">freetheenslaved@gmail.com</a></p>
