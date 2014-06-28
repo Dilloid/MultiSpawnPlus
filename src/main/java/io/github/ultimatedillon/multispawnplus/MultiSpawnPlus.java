@@ -135,7 +135,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
 								player.sendMessage("Usage: /msp delete <name>");
 							} else {
-								if (!getConfig().contains(args[1])) {
+								if (getConfig().contains("spawns." + args[1])) {
 									getConfig().set("spawns." + args[1], null);
 									saveConfig();
 									ReloadRandoms();
