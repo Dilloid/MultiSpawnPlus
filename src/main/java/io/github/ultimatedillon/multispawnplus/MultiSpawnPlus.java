@@ -81,7 +81,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		if (cmd.getName().equalsIgnoreCase("multispawnplus")) {
 			if (args.length < 1) {
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b#####################"));
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eMultiSpawnPlus v0.3.5"));
+				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eMultiSpawnPlus v1.0.1"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eby UltimateDillon"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b#####################"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "Use &6/msp help &ffor command syntax."));
