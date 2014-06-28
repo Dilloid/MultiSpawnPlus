@@ -1,18 +1,21 @@
 name: MultiSpawnPlus
 main: io.github.ultimatedillon.multispawnplus.MultiSpawnPlus
-version: 0.2.1
+version: 0.3.2
 author: UltimateDillon
-description: MultiSpawnPlus
+description: MultiSpawnPlus - A spawning plugin by UltimateDillon.
 commands:
   multispawnplus:
     description: The base command for all things MultiSpawnPlus.
     aliases: [msp]
     usage:  |
             Usage:
-            /<command> add <name>
-            /<command> delete <name>
-            /<command> spawn <name>
-            /<command> reload
+            /<command> add <name> [true|false] - Adds a spawn point where you are standing
+            /<command> delete <name> - Removes a spawn point
+            /<command> spawn <name> - Teleports you to a defined spawn point
+            /<command> random - Teleports you to a random spawn point
+            /<command> list - Lists all available spawn points
+            /<command> reload - Reloads the config
+            /<command> help - Shows this list
 permissions:
   multispawnplus.*:
     description: Gives access to all features of MultiSpawnPlus.
@@ -20,4 +23,7 @@ permissions:
       multispawnplus.add: true
       multispawnplus.delete: true
       multispawnplus.spawn: true
+      multispawnplus.random: true
+      multispawnplus.list: true
       multispawnplus.reload: true
+      multispawnplus.help: true
