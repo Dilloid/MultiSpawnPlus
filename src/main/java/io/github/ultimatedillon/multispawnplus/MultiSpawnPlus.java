@@ -1,7 +1,10 @@
 package io.github.ultimatedillon.multispawnplus;
 
+import java.io.File;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -25,13 +28,15 @@ public final class MultiSpawnPlus extends JavaPlugin {
 			defaultWorld.getSpawnLocation().getBlockZ()
 		};
 		
-		getConfig().addDefault("spawns.default.world", defaultWorld.getName());
-		getConfig().addDefault("spawns.default.X", coords[0]);
-		getConfig().addDefault("spawns.default.Y", coords[1]);
-		getConfig().addDefault("spawns.default.Z", coords[2]);
-		
-		getConfig().options().copyDefaults(true);
-        saveConfig();
+		if (!new File(getDataFolder(), "config.yml").exists()) {
+			getConfig().addDefault("spawns.default.world", defaultWorld.getName());
+			getConfig().addDefault("spawns.default.X", coords[0]);
+			getConfig().addDefault("spawns.default.Y", coords[1]);
+			getConfig().addDefault("spawns.default.Z", coords[2]);
+			
+			getConfig().options().copyDefaults(true);
+	        saveConfig();
+		}
 	}
 	
 	@Override
@@ -73,10 +78,34 @@ public final class MultiSpawnPlus extends JavaPlugin {
 							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
 							return false;
 						} else {
-							if (getConfig().contains(args[1])) {
+							if (!getConfig().contains(args[1])) {
 								getConfig().set("spawns." + args[1], null);
 								saveConfig();
 								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bSpawnpoint &f" + args[1] + " &bdeleted."));
+							} else {
+								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat spawnpoint doesn't exist."));
+							}
+						}
+					} else {
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
+					}
+				
+				} else if (args[0].equalsIgnoreCase("spawn")) {
+					if (player.hasPermission("multispawnplus.spawn")) {
+						if (args.length < 2) {
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a spawnpoint."));
+						} else if (args.length > 2) {
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
+							return false;
+						} else {
+							if (!getConfig().contains(args[1])) {
+								World world = Bukkit.getWorld(getConfig().get("spawns." + args[1] + ".world").toString());
+								int x = getConfig().getInt("spawns." + args[1] + ".X");
+								int y = getConfig().getInt("spawns." + args[1] + ".Y");
+								int z = getConfig().getInt("spawns." + args[1] + ".Z");
+								
+								Location loc = new Location(world, x, y, z);
+								player.teleport(loc);
 							} else {
 								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat spawnpoint doesn't exist."));
 							}

@@ -1,6 +1,6 @@
 name: MultiSpawnPlus
 main: io.github.ultimatedillon.multispawnplus.MultiSpawnPlus
-version: 0.1.5
+version: 0.1.8
 author: UltimateDillon
 description: MultiSpawnPlus
 commands:
@@ -19,4 +19,5 @@ permissions:
     children:
       multispawnplus.add
       multispawnplus.delete
+      multispawnplus.spawn
       multispawnplus.reload

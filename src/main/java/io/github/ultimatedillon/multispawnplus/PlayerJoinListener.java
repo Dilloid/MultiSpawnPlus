@@ -12,6 +12,10 @@ public final class PlayerJoinListener implements Listener {
 	
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		Bukkit.getServer().getLogger().info("MultiSpawnPlus: " + event.getPlayer().getName() + " has joined!");
+		Bukkit.getLogger().info("MultiSpawnPlus: " + event.getPlayer().getName() + " has joined!");
+		
+		if (!event.getPlayer().hasPlayedBefore()) {
+			Bukkit.getLogger().info("MultiSpawnPlus: This player has joined for the first time.");
+		}
 	}
 }
