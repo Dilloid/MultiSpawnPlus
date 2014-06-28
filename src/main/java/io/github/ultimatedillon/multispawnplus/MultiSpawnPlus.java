@@ -31,7 +31,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		int[] coords = {
 			defaultWorld.getSpawnLocation().getBlockX(),
 			defaultWorld.getSpawnLocation().getBlockY(),
-			defaultWorld.getSpawnLocation().getBlockZ()			
+			defaultWorld.getSpawnLocation().getBlockZ()
 		};
 		
 		float yaw = defaultWorld.getSpawnLocation().getYaw();
