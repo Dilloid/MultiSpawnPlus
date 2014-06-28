@@ -34,13 +34,16 @@ public final class PlayerJoinListener implements Listener {
 				int x = config.getInt("spawns." + allowed[i] + ".X");
 				int y = config.getInt("spawns." + allowed[i] + ".Y");
 				int z = config.getInt("spawns." + allowed[i] + ".Z");
+				int yaw = config.getInt("spawns." + allowed[i] + ".yaw");
+				int pitch = config.getInt("spawns." + allowed[i] + ".pitch");
 				
-				Bukkit.getLogger().info(world + ", " + x + ", " + y + ", " + z);
+				Bukkit.getLogger().info("MultiSpawnPlus: - Teleporting " + event.getPlayer().getName() + " to " + allowed[i]
+						+ "(" + world + ", " + x + ", " + y + ", " + z + ", " + yaw + ", " + pitch + ")");
 				
 				if (world == null) {
 					event.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat world does not exist!"));
 				} else {
-					Location loc = new Location(world, x, y, z);
+					Location loc = new Location(world, x, y, z, yaw, pitch);
 					event.getPlayer().teleport(loc);
 				}
 			}

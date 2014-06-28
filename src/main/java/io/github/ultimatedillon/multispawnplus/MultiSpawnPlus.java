@@ -31,16 +31,21 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		int[] coords = {
 			defaultWorld.getSpawnLocation().getBlockX(),
 			defaultWorld.getSpawnLocation().getBlockY(),
-			defaultWorld.getSpawnLocation().getBlockZ()
+			defaultWorld.getSpawnLocation().getBlockZ()			
 		};
+		
+		float yaw = defaultWorld.getSpawnLocation().getYaw();
+		float pitch = defaultWorld.getSpawnLocation().getPitch();
 		
 		if (!new File(getDataFolder(), "config.yml").exists()) {
 			getConfig().addDefault("options.random-spawn-on-join", false);
 			getConfig().addDefault("spawns.default.world", defaultWorld.getName());
-			getConfig().addDefault("spawns.default.allow-random-spawn", true);
+			getConfig().addDefault("spawns.default.allow-random-spawn", false);
 			getConfig().addDefault("spawns.default.X", coords[0]);
 			getConfig().addDefault("spawns.default.Y", coords[1]);
-			getConfig().addDefault("spawns.default.Z", coords[2]);			
+			getConfig().addDefault("spawns.default.Z", coords[2]);
+			getConfig().addDefault("spawns.default.yaw", Float.toString(yaw));
+			getConfig().addDefault("spawns.default.pitch", Float.toString(pitch));
 			
 			getConfig().options().copyDefaults(true);
 		}
@@ -76,7 +81,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		if (cmd.getName().equalsIgnoreCase("multispawnplus")) {
 			if (args.length < 1) {
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b#####################"));
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eMultiSpawnPlus v0.3.2"));
+				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eMultiSpawnPlus v0.3.5"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eby UltimateDillon"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b#####################"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "Use &6/msp help &ffor command syntax."));
@@ -102,6 +107,8 @@ public final class MultiSpawnPlus extends JavaPlugin {
 										getConfig().set("spawns." + args[1] + ".X", player.getLocation().getBlockX());
 										getConfig().set("spawns." + args[1] + ".Y", player.getLocation().getBlockY());
 										getConfig().set("spawns." + args[1] + ".Z", player.getLocation().getBlockZ());
+										getConfig().set("spawns." + args[1] + ".yaw", player.getLocation().getYaw());
+										getConfig().set("spawns." + args[1] + ".pitch", player.getLocation().getPitch());
 										saveConfig();
 										player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bSpawnpoint &f" + args[1] + " &bhas been created!"));
 									} else if (!args[2].equalsIgnoreCase("true") && !args[2].equalsIgnoreCase("false")) {
@@ -183,11 +190,13 @@ public final class MultiSpawnPlus extends JavaPlugin {
 									int x = getConfig().getInt("spawns." + args[1] + ".X");
 									int y = getConfig().getInt("spawns." + args[1] + ".Y");
 									int z = getConfig().getInt("spawns." + args[1] + ".Z");
+									int yaw = getConfig().getInt("spawns." + args[1] + ".yaw");
+									int pitch = getConfig().getInt("spawns." + args[1] + ".pitch");
 									
 									if (world == null) {
 										player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat world does not exist!"));
 									} else {
-										Location loc = new Location(world, x, y, z);
+										Location loc = new Location(world, x, y, z, yaw, pitch);
 										player.teleport(loc);
 									}
 								} else {
@@ -221,13 +230,16 @@ public final class MultiSpawnPlus extends JavaPlugin {
 								int x = getConfig().getInt("spawns." + allowed[i] + ".X");
 								int y = getConfig().getInt("spawns." + allowed[i] + ".Y");
 								int z = getConfig().getInt("spawns." + allowed[i] + ".Z");
+								int yaw = getConfig().getInt("spawns." + allowed[i] + ".yaw");
+								int pitch = getConfig().getInt("spawns." + allowed[i] + ".pitch");
 								
-								getLogger().info(world + ", " + x + ", " + y + ", " + z);
+								getLogger().info("MultiSpawnPlus: - Teleporting " + player.getName() + " to " + allowed[i]
+										+ "(" + world + ", " + x + ", " + y + ", " + z + ", " + yaw + ", " + pitch + ")");
 								
 								if (world == null) {
 									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat world does not exist!"));
 								} else {
-									Location loc = new Location(world, x, y, z);
+									Location loc = new Location(world, x, y, z, yaw, pitch);
 									player.teleport(loc);
 								}
 							}
@@ -270,7 +282,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 						if (player.hasPermission("multispawnplus.reload")) {
 							reloadConfig();
 							ReloadRandoms();
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bMultiSpawnPlus config reloaded!"));
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6MultiSpawnPlus config reloaded!"));
 						} else {
 							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
 						}

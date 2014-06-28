@@ -1,6 +1,6 @@
 name: MultiSpawnPlus
 main: io.github.ultimatedillon.multispawnplus.MultiSpawnPlus
-version: 0.3.2
+version: 0.3.5
 author: UltimateDillon
 description: MultiSpawnPlus - A spawning plugin by UltimateDillon.
 commands:
