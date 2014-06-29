@@ -19,5 +19,17 @@
 	<li><strong>spawns.<name>.allow-random-spawn: true/false</strong> - Tells the plugin whether this spawnpoint can be teleported to by new players or players typing the /msp random command.</li>
 </ul>
 
+<h3>Permissions</h3>
+<ul>
+	<li><strong>multispawnplus.*</strong> - Gives access to all features of MultiSpawnPlus</li>
+	<li><strong>multispawnplus.add</strong> - Allows the user to create spawn points.</li>
+	<li><strong>multispawnplus.delete</strong> - Allows the user to remove spawn points.</li>
+	<li><strong>multispawnplus.spawn</strong> - Allows the user to teleport to any defined spawn point.</li>
+	<li><strong>multispawnplus.random</strong> - Allows the user to teleport to a random spawn point.</li>
+	<li><strong>multispawnplus.list</strong> - Allows the user to see a list of all defined spawn points.</li>
+	<li><strong>multispawnplus.reload</strong> - Allows the user to reload the plugin and config.</li>
+	<li><strong>multispawnplus.help</strong> - Allows the user to see a list of MultiSpawnPlus commands.</li>
+</ul>
+
 <h4>Questions?</h4>
 <p>Email me bug reports and questions at <a href="mailto:freetheenslaved@gmail.com" alt="Email Me">freetheenslaved@gmail.com</a></p>
