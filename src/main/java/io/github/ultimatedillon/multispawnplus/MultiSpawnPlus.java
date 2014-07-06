@@ -9,14 +9,17 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 public final class MultiSpawnPlus extends JavaPlugin {
 	String[] spawns;
 	String[] allowed;
+	String[] portals;
 	
 	@Override
 	public void onEnable() {
@@ -76,12 +79,30 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		}
 	}
 	
+	public void ReloadPortals() {
+		Set<String> portalList = getConfig().getConfigurationSection("portals").getKeys(false);
+		portals = portalList.toArray(new String[portalList.size()]);
+	}
+	
+	public Block getTargetBlock(Player player, int range) {
+	    Location loc = player.getEyeLocation();
+	    Vector dir = loc.getDirection().normalize();
+	 
+	    Block b = null;
+	 
+	    for (int i = 0; i <= range; i++) {
+	        b = loc.add(dir).getBlock();
+	    }
+	 
+	    return b;
+	}
+	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (cmd.getName().equalsIgnoreCase("multispawnplus")) {
 			if (args.length < 1) {
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b#####################"));
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eMultiSpawnPlus v1.0.1"));
+				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eMultiSpawnPlus v1.1.0"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eby UltimateDillon"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b#####################"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "Use &6/msp help &ffor command syntax."));
@@ -92,7 +113,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 					if (sender instanceof Player) {
 						Player player = (Player) sender;
 						
-						if (player.hasPermission("multispawnplus.delete")) {
+						if (player.hasPermission("multispawnplus.add")) {
 							if (args.length < 3) {
 								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a name for this spawnpoint, and whether it can be used as a random spawn."));
 								player.sendMessage("Usage: /msp add <name> [true|false]");
@@ -100,7 +121,12 @@ public final class MultiSpawnPlus extends JavaPlugin {
 								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
 								player.sendMessage("Usage: /msp add <name> [true|false]");
 							} else {
-								if (!getConfig().contains("spawns." + args[1])) {
+								if (args[1] == "random") {
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cSpawnpoints must not be named random!"));
+								} else if (getConfig().contains("spawns." + args[1])) {
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cA spawnpoint with that name already exists!"));
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cUse &f/msp delete <name> &bto delete existing spawnpoints."));
+								} else {
 									if (args[2].equalsIgnoreCase("true") || args[2].equalsIgnoreCase("false")) {
 										getConfig().set("spawns." + args[1] + ".world", player.getWorld().getName());
 										getConfig().set("spawns." + args[1] + ".allow-random-spawn", new Boolean(args[2]));
@@ -117,9 +143,58 @@ public final class MultiSpawnPlus extends JavaPlugin {
 									} else {
 										player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cDerp. Something went wrong!"));
 									}
+								}
+							}
+						} else {
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
+						}
+					} else {
+						sender.sendMessage("MultiSpawnPlus: This command can only be run by a player");
+					}
+				//endregion
+					
+				//region AddPortal
+				} else if (args[0].equalsIgnoreCase("addportal")) {
+					if (sender instanceof Player) {
+						Player player = (Player) sender;
+						
+						if (player.hasPermission("multispawnplus.addportal")) {
+							if (args.length < 3) {
+								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a name for this "
+										+ "portal block, and the destination spawnpoint."));
+								player.sendMessage("Usage: /msp addportal <name> <destination> "
+										+ "(Leave the destination blank to make the destination be chosen randomly.)");
+							} else if (args.length > 3) {
+								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
+								player.sendMessage("Usage: /msp addportal <name> <destination> "
+										+ "(Leave the destination blank to make the destination be chosen randomly.)");
+							} else {
+								if (getConfig().contains("portals." + args[1])) {
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cA portal with that name "
+											+ "already exists!"));
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cUse &f/msp deleteportal "
+											+ "<name> &bto delete existing portal blocks."));
+								} else if (!getConfig().contains("spawns." + args[2])) { 
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThe destination spawn point "
+											+ "doesn't exist!"));
 								} else {
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cA spawnpoint with that name already exists!"));
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cUse &f/msp delete <name> &bto delete existing spawnpoints."));
+									Location loc = new Location(player.getWorld(), 
+											getTargetBlock(player, 5).getX(), 
+											getTargetBlock(player, 5).getY(), 
+											getTargetBlock(player, 5).getZ());
+									getConfig().set("portals." + args[1] + ".world", player.getWorld().getName());
+									getConfig().set("portals." + args[1] + ".location", loc.toString());
+									
+									if (args[2] != null) {
+										getConfig().set("portals." + args[1] + ".destination", args[2]);
+									} else {
+										getConfig().set("portals." + args[1] + ".destination", "random");
+									}
+									
+									saveConfig();
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bPortal &f" + args[1] 
+											+ " &bhas been created at " + loc.getBlockX() + ", " 
+											+ loc.getBlockY() + ", " + loc.getBlockZ() + "."));
 								}
 							}
 						} else {
