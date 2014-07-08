@@ -23,7 +23,7 @@
 
 <h3>Permissions</h3>
 <ul>
-	<li><strong>multispawnplus.*</strong> - Gives access to all features of MultiSpawnPlus</li>
+	<li><strong>multispawnplus.*</strong> - Gives access to all features of MultiSpawnPlus.</li>
 	<li><strong>multispawnplus.add.*</strong> - Allows the user to create portal blocks and spawn points.</li>
 	<li><strong>multispawnplus.add.spawn</strong> - Allows the user to create spawn points.</li>
 	<li><strong>multispawnplus.add.portal</strong> - Allows the user to create portal blocks.</li>
