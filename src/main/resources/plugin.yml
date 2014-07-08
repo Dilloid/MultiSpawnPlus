@@ -1,21 +1,21 @@
 name: MultiSpawnPlus
 main: io.github.ultimatedillon.multispawnplus.MultiSpawnPlus
-version: 1.1.45
+version: 1.2.10
 author: UltimateDillon
-description: MultiSpawnPlus - A spawning plugin by UltimateDillon.
+description: MultiSpawnPlus - An advanced spawning and teleportation plugin by UltimateDillon.
 commands:
   multispawnplus:
     description: The base command for all things MultiSpawnPlus.
     aliases: [msp]
     usage:  |
             Usage:
-            /<command> add <name> [true|false] - Adds a spawn point where you are standing
-            /<command> addportal <name> <destination> - Adds a portal on the block you are targeting
+            /<command> add <name> [true|false] <spawn group> - Adds a spawn point where you are standing
+            /<command> addportal <name> <destination> <spawn group> - Adds a portal on the block you are targeting
             /<command> delete <name> - Removes a spawn point
             /<command> delportal <name> - Removes a portal block
             /<command> spawn <name> - Teleports you to a defined spawn point
-            /<command> random - Teleports you to a random spawn point
-            /<command> list - Lists all available spawn points
+            /<command> random <spawn group> - Teleports you to a random spawn point
+            /<command> list [spawns|portals] [traits] - Lists spawn points and portals
             /<command> reload - Reloads the config
             /<command> help - Shows this list
 permissions:

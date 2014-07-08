@@ -31,9 +31,9 @@ public class PlayerJoinListener implements Listener {
 				int i = rand.nextInt(allowed.length);
 				
 				World world = Bukkit.getWorld(config.getString("spawns." + allowed[i] + ".world"));
-				int x = config.getInt("spawns." + allowed[i] + ".X");
-				int y = config.getInt("spawns." + allowed[i] + ".Y");
-				int z = config.getInt("spawns." + allowed[i] + ".Z");
+				double x = config.getInt("spawns." + allowed[i] + ".X") + 0.5;
+				double y = config.getInt("spawns." + allowed[i] + ".Y");
+				double z = config.getInt("spawns." + allowed[i] + ".Z") + 0.5;
 				int yaw = config.getInt("spawns." + allowed[i] + ".yaw");
 				int pitch = config.getInt("spawns." + allowed[i] + ".pitch");
 				
