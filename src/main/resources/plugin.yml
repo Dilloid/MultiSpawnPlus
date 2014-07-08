@@ -1,6 +1,6 @@
 name: MultiSpawnPlus
 main: io.github.ultimatedillon.multispawnplus.MultiSpawnPlus
-version: 1.0.1
+version: 1.1.45
 author: UltimateDillon
 description: MultiSpawnPlus - A spawning plugin by UltimateDillon.
 commands:
@@ -10,7 +10,9 @@ commands:
     usage:  |
             Usage:
             /<command> add <name> [true|false] - Adds a spawn point where you are standing
+            /<command> addportal <name> <destination> - Adds a portal on the block you are targeting
             /<command> delete <name> - Removes a spawn point
+            /<command> delportal <name> - Removes a portal block
             /<command> spawn <name> - Teleports you to a defined spawn point
             /<command> random - Teleports you to a random spawn point
             /<command> list - Lists all available spawn points
@@ -20,10 +22,38 @@ permissions:
   multispawnplus.*:
     description: Gives access to all features of MultiSpawnPlus.
     children:
-      multispawnplus.add: true
-      multispawnplus.delete: true
+      multispawnplus.add.*: true
+      multispawnplus.delete.*: true
       multispawnplus.spawn: true
       multispawnplus.random: true
       multispawnplus.list: true
       multispawnplus.reload: true
       multispawnplus.help: true
+  multispawnplus.add.*:
+    description: Allows the user to add portal blocks and spawn points.
+    children:
+      multispawnplus.add.spawn: true
+      multispawnplus.add.portal: true
+  multispawnplus.add.spawn:
+    description: Allows the user to add spawn points.
+  multispawnplus.add.portal:
+    description: Allows the user to add portal blocks.
+  multispawnplus.delete.*:
+    description: Allows the user to delete portal blocks and spawn points.
+    children:
+      multispawnplus.delete.spawn: true
+      multispawnplus.delete.portal: true
+  multispawnplus.delete.spawn:
+    description: Allows the user to delete spawn points.
+  multispawnplus.delete.portal:
+    description: Allows the user to delete portal blocks.
+  multispawnplus.spawn:
+    description: Allows the user to teleport to a defined spawn point.
+  multispawnplus.random:
+    description: Allows the user to teleport to a random spawn point.
+  multispawnplus.list:
+    description: Allows the user to see a list of defined spawn points.
+  multispawnplus.reload:
+    description: Allows the user to reload the plugin and configurations.
+  multispawnplus.help:
+    description: Allows the user to see a list of commands and usage examples.

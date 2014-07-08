@@ -11,7 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-public final class PlayerJoinListener implements Listener {
+public class PlayerJoinListener implements Listener {
 	FileConfiguration config;
 	String[] allowed;
 	
