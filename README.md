@@ -4,13 +4,13 @@
 
 <h4>Command Usage:</h4>
 <ul>
-	<li><strong>/msp add [name] [true|false]</strong> - Adds a spawn point where you are standing and sets whether or not players can spawn at it randomly.</li>
-	<li><strong>/msp addportal [name] [destination]</strong> - Adds a portal on the block you are targeting</li>
+	<li><strong>/msp add [name] [true|false] [spawn group]</strong> - Adds a spawn point where you are standing and sets whether or not players can spawn at it randomly.</li>
+	<li><strong>/msp addportal [name] [destination] [spawn group]</strong> - Adds a portal on the block you are targeting</li>
 	<li><strong>/msp delete [name]</strong> - Deletes a spawn point from the server.</li>
 	<li><strong>/msp delportal [name]</strong> - Deletes a portal block from the server.</li>
 	<li><strong>/msp spawn [name]</strong> - Teleports you to a specific spawn point.</li>
-	<li><strong>/msp random</strong> - Teleports you to a random spawn point if its allow-random-spawn setting is set to true.</li>
-	<li><strong>/msp list</strong> - Lists all defined spawn points.</li>
+	<li><strong>/msp random [spawn group]</strong> - Teleports you to a random spawn point if its allow-random-spawn setting is set to true.</li>
+	<li><strong>/msp list [spawns|portals] [traits]</strong> - Lists all defined spawn points.</li>
 	<li><strong>/msp reload</strong> - Reloads the plugin and configuration.</li>
 	<li><strong>/msp help</strong> - Shows a list of commands.</li>
 </ul>
