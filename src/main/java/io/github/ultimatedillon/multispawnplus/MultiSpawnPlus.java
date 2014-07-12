@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Set;
 
+import net.gravitydevelopment.updater.Updater;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -19,7 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.mcstats.Metrics;
 
 public final class MultiSpawnPlus extends JavaPlugin {
-	String version = "v1.2.26";
+	String version = "v1.2.27";
 	
 	String[] spawns;
 	String[] allowed;
@@ -44,6 +46,9 @@ public final class MultiSpawnPlus extends JavaPlugin {
         } catch (IOException e) {
             getLogger().info("MultiSpawnPlus: Failed to submit stats to MCStats.org");
         }
+        
+        @SuppressWarnings("unused")
+		Updater updater = new Updater(this, 81894, this.getFile(), Updater.UpdateType.DEFAULT, false);
     }
 	
 	public void reloadPlugin() {
