@@ -1,6 +1,7 @@
 package io.github.ultimatedillon.multispawnplus;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Set;
@@ -15,11 +16,15 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.mcstats.Metrics;
 
 public final class MultiSpawnPlus extends JavaPlugin {
+	String version = "v1.2.26";
+	
 	String[] spawns;
 	String[] allowed;
 	String[] portals;
+	
 	PlayerJoinListener joinListener;
 	PlayerMoveListener moveListener;
 	
@@ -29,10 +34,21 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		
         joinListener = new PlayerJoinListener(this);
         moveListener = new PlayerMoveListener(this);
+        
+        try {
+            Metrics metrics = new Metrics(this);
+            
+            metrics.start();
+            
+            getLogger().info("MultiSpawnPlus: Succesfully submitting stats to MCStats.org!");
+        } catch (IOException e) {
+            getLogger().info("MultiSpawnPlus: Failed to submit stats to MCStats.org");
+        }
     }
 	
 	public void reloadPlugin() {
 		reloadConfig();
+		
 		World defaultWorld = Bukkit.getServer().getWorlds().get(0);
 		
 		int[] coords = {
@@ -46,6 +62,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		
 		if (!new File(getDataFolder(), "config.yml").exists()) {
 			getConfig().addDefault("options.random-spawn-on-join", false);
+			getConfig().addDefault("options.first-join-spawn-group", "default");
 			getConfig().addDefault("spawns.default.world", defaultWorld.getName());
 			getConfig().addDefault("spawns.default.allow-random-spawn", false);
 			getConfig().addDefault("spawns.default.spawn-group", "default");
@@ -69,6 +86,10 @@ public final class MultiSpawnPlus extends JavaPlugin {
 			getConfig().set("options.random-spawn-on-join", false);
 		} else if (getConfig().getBoolean("options.random-spawn-on-join") != true) {
 			getConfig().set("options.random-spawn-on-join", false);
+		}
+		
+		if (!getConfig().contains("options.first-join-spawn-group")) {
+			getConfig().set("options.first-join-spawn-group", "default");
 		}
 		
 		if (getConfig().getConfigurationSection("spawns") == null) {
@@ -166,7 +187,25 @@ public final class MultiSpawnPlus extends JavaPlugin {
 			}
 		}
 		
+		if (validFirstGroup() == false) {
+			Bukkit.getLogger().info("MultiSpawnPlus: The spawn group you have chosen under 'first-join-spawn-group' "
+					+ "doesn't have any random spawn points to use! Disabling random spawning on first join...");
+			
+			getConfig().set("options.random-spawn-on-join", new Boolean(false));
+		}
+		
 		saveConfig();
+	}
+	
+	public boolean validFirstGroup() {
+		String firstGroup = getConfig().getString("options.first-join-spawn-group");
+		
+		for (int i = 0; i < allowed.length; i++) {
+			if (getConfig().getString("spawns." + allowed[i] + ".spawn-group").equalsIgnoreCase(firstGroup)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public void reloadPortals() {
@@ -180,7 +219,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		if (cmd.getName().equalsIgnoreCase("multispawnplus")) {
 			if (args.length < 1) {
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b#####################"));
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eMultiSpawnPlus v1.2.10"));
+				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eMultiSpawnPlus " + version));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eby UltimateDillon"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b#####################"));
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "Use &6/msp help &ffor command syntax."));
@@ -641,6 +680,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 							reloadPlugin();
 							reloadPortals();
 							moveListener.getConfiguration(this);
+							joinListener.playerConfigClass.reloadConfig();
 							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6MultiSpawnPlus config reloaded!"));
 						} else {
 							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
@@ -649,6 +689,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 						reloadPlugin();
 						reloadPortals();
 						moveListener.getConfiguration(this);
+						joinListener.playerConfigClass.reloadConfig();
 						sender.sendMessage("MultiSpawnPlus: Config reloaded!");
 					}
 				//endregion
