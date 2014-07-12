@@ -1,8 +1,9 @@
 <h1>MultiSpawnPlus</h1>
-<h3>Spawn players at various defined spawnpoints randomly</h3>
-<p>This plugin has been made so you can control (or rather not control) where players spawn, either on first login or by typing a command.</p>
+<h3>Spawn players at various defined points randomly</h3>
+<p>This plugin has been created to provide various new ways to spawn and teleport players on your server, ranging from automatic spawning on first join, to portals set up with just a few commands.</p>
+<h4><a href="http://dev.bukkit.org/bukkit-plugins/multi-spawn-plus/" alt="MultiSpawnPlus @ BukkitDev">Plugin Page @ BukkitDev</a></h4>
 
-<h4>Command Usage:</h4>
+<h4>Command Usage</h4>
 <ul>
 	<li><strong>/msp add [name] [true|false] [spawn group]</strong> - Adds a spawn point where you are standing and sets whether or not players can spawn at it randomly.</li>
 	<li><strong>/msp addportal [name] [destination] [spawn group]</strong> - Adds a portal on the block you are targeting</li>
@@ -37,5 +38,11 @@
 	<li><strong>multispawnplus.help</strong> - Allows the user to see a list of MultiSpawnPlus commands.</li>
 </ul>
 
-<h4>Questions?</h4>
+<h4>MCStats / Plugin Metrics</h4>
+This plugin is sending server statistics to MCStats.org as of v1.2.24. To opt out, set opt-out to true in your server's PluginMetrics config.
+
+<h4>Updater</h4>
+This plugin will automatically check for updates using Bukkit's Updater feature (as of v1.2.25).
+
+<h4>Questions or Suggestions?</h4>
 <p>Email me bug reports and questions at <a href="mailto:freetheenslaved@gmail.com" alt="Email Me">freetheenslaved@gmail.com</a></p>
