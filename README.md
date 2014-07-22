@@ -39,10 +39,11 @@
 </ul>
 
 <h4>MCStats / Plugin Metrics</h4>
-This plugin is sending server statistics to MCStats.org as of v1.2.24. To opt out, set opt-out to true in your server's PluginMetrics config.
+This plugin is sending server statistics to MCStats.org as of v1.2.24. To opt out, set <strong>allow-plugin-metrics</strong> to 'false' in the MultiSpawnPlus config.
 
 <h4>Updater</h4>
-This plugin will automatically check for updates using Bukkit's Updater feature (as of v1.2.25).
+If <strong>auto-update</strong> is set to 'true', this plugin will automatically download updates using Updater (as of v1.2.27).
+You may also set it to 'false' to only receive a message via the console if Updater detects a new version.
 
 <h4>Questions or Suggestions?</h4>
 <p>Email me bug reports and questions at <a href="mailto:freetheenslaved@gmail.com" alt="Email Me">freetheenslaved@gmail.com</a></p>
