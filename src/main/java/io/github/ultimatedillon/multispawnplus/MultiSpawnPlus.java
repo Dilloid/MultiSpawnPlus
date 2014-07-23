@@ -21,7 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.mcstats.Metrics;
 
 public final class MultiSpawnPlus extends JavaPlugin {
-	String version = "v1.2.27";
+	String version = "v1.2.39";
 	
 	String[] spawns;
 	String[] allowed;
@@ -30,6 +30,14 @@ public final class MultiSpawnPlus extends JavaPlugin {
 	PlayerJoinListener joinListener;
 	PlayerMoveListener moveListener;
 	
+	Metrics metrics;
+	Updater updater;
+	
+	@Override
+	public void onDisable() {
+  		getServer().getScheduler().cancelTasks(this);
+  	}
+	
 	@Override
 	public void onEnable() {
 		reloadPlugin();
@@ -37,18 +45,32 @@ public final class MultiSpawnPlus extends JavaPlugin {
         joinListener = new PlayerJoinListener(this);
         moveListener = new PlayerMoveListener(this);
         
-        try {
-            Metrics metrics = new Metrics(this);
-            
-            metrics.start();
-            
-            getLogger().info("MultiSpawnPlus: Succesfully submitting stats to MCStats.org!");
-        } catch (IOException e) {
-            getLogger().info("MultiSpawnPlus: Failed to submit stats to MCStats.org");
+        if (getConfig().getBoolean("options.allow-plugin-metrics", true)) {
+	        try {
+	            metrics = new Metrics(this);
+	            metrics.start();
+	            
+	            getLogger().info("MultiSpawnPlus: Succesfully submitting stats to MCStats.org!");
+	        } catch (IOException e) {
+	            getLogger().info("MultiSpawnPlus: Failed to submit stats to MCStats.org! Error: " + e);
+	        }
+        } else {
+        	getLogger().info("MultiSpawnPlus: Plugin Metrics disallowed! Disabling submission of stats to MCStats.org...");
         }
         
-        @SuppressWarnings("unused")
-		Updater updater = new Updater(this, 81894, this.getFile(), Updater.UpdateType.DEFAULT, false);
+        if (getConfig().getBoolean("options.auto-update") == true) {
+			updater = new Updater(this, 81894, this.getFile(), Updater.UpdateType.DEFAULT, true);
+        } else if (getConfig().getBoolean("options.auto-update") == false) {
+        	updater = new Updater(this, 81894, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false);
+        	
+        	String latest = updater.getLatestName().substring(15);
+        	if (version.equalsIgnoreCase(latest)) {
+        		getLogger().info("MultiSpawnPlus: No updates available.");
+        	} else {
+        		getLogger().info("MultiSpawnPlus: Update available! (" + latest + ")");
+        		getLogger().info("MultiSpawnPlus: Download here: " + updater.getLatestFileLink());
+        	}
+        }
     }
 	
 	public void reloadPlugin() {
@@ -66,8 +88,11 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		float pitch = defaultWorld.getSpawnLocation().getPitch();
 		
 		if (!new File(getDataFolder(), "config.yml").exists()) {
+			getConfig().addDefault("version", version);
 			getConfig().addDefault("options.random-spawn-on-join", false);
 			getConfig().addDefault("options.first-join-spawn-group", "default");
+			getConfig().addDefault("options.auto-update", false);
+			getConfig().addDefault("options.allow-plugin-metrics", true);
 			getConfig().addDefault("spawns.default.world", defaultWorld.getName());
 			getConfig().addDefault("spawns.default.allow-random-spawn", false);
 			getConfig().addDefault("spawns.default.spawn-group", "default");
@@ -87,6 +112,8 @@ public final class MultiSpawnPlus extends JavaPlugin {
 			getConfig().options().copyDefaults(true);
 		}
 		
+		getConfig().set("version", version);
+		
 		if (!getConfig().contains("options.random-spawn-on-join")) {
 			getConfig().set("options.random-spawn-on-join", false);
 		} else if (getConfig().getBoolean("options.random-spawn-on-join") != true) {
@@ -95,6 +122,18 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		
 		if (!getConfig().contains("options.first-join-spawn-group")) {
 			getConfig().set("options.first-join-spawn-group", "default");
+		}
+		
+		if (!getConfig().contains("options.auto-update")) {
+			getConfig().set("options.auto-update", false);
+		} else if (getConfig().getBoolean("options.auto-update") != true) {
+			getConfig().set("options.auto-update", false);
+		}
+		
+		if (!getConfig().contains("options.allow-plugin-metrics")) {
+			getConfig().set("options.allow-plugin-metrics", true);
+		} else if (getConfig().getBoolean("options.allow-plugin-metrics") != true) {
+			getConfig().set("options.allow-plugin-metrics", false);
 		}
 		
 		if (getConfig().getConfigurationSection("spawns") == null) {
@@ -193,10 +232,14 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		}
 		
 		if (validFirstGroup() == false) {
-			Bukkit.getLogger().info("MultiSpawnPlus: The spawn group you have chosen under 'first-join-spawn-group' "
-					+ "doesn't have any random spawn points to use! Disabling random spawning on first join...");
-			
-			getConfig().set("options.random-spawn-on-join", new Boolean(false));
+			if (getConfig().getBoolean("options.random-spawn-on-join") == true) {
+				Bukkit.getLogger().info("MultiSpawnPlus: The spawn group you have chosen under 'first-join-spawn-group' "
+						+ "doesn't have any random spawn points to use! Disabling random spawning on first join...");
+				getConfig().set("options.random-spawn-on-join", new Boolean(false));
+			} else {
+				Bukkit.getLogger().info("MultiSpawnPlus: The spawn group you have chosen under 'first-join-spawn-group' "
+						+ "doesn't have any random spawn points to use!");
+			}
 		}
 		
 		saveConfig();
@@ -314,48 +357,48 @@ public final class MultiSpawnPlus extends JavaPlugin {
 								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
 								player.sendMessage("Usage: /msp addportal <name> <destination> <spawn-group>");
 							} else {
+								Block targetBlock = player.getTargetBlock(null, 8);
+								Location loc = targetBlock.getLocation();
+								
 								if (getConfig().contains("portals." + args[1])) {
 									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cA portal with that name "
 											+ "already exists!"));
 									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bUse &f/msp deleteportal "
 											+ "<name> &bto delete existing portal blocks."));
+								} else if (targetBlock.getType().equals(Material.AIR)) {
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease select a block "
+											+ "to use as the portal block!"));
+								} else if (!args[2].equalsIgnoreCase("random") && 
+										   !getConfig().contains("spawns." + args[2])) {
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThe "
+											+ "destination spawn point doesn't exist!"));
 								} else {
-									Block targetBlock = player.getTargetBlock(null, 8);
-									if (!targetBlock.getType().equals(Material.AIR)) {
-										Location loc = targetBlock.getLocation();
-										getConfig().set("portals." + args[1] + ".world", loc.getWorld().getName());
-										
-										if (args[2].equalsIgnoreCase("random")) {
-											getConfig().set("portals." + args[1] + ".destination", "random");
-										} else if (!getConfig().contains("spawns." + args[1])) {
-											player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThe "
-													+ "destination spawn point doesn't exist!"));
-										} else {
-											getConfig().set("portals." + args[1] + ".destination", args[2]);
-										}
-										
-										if (args.length > 3) {
-											getConfig().set("portals." + args[1] + ".spawn-group", args[3]);
-										} else {
-											getConfig().set("portals." + args[1] + ".spawn-group", "default");
-										}
-										
-										getConfig().set("portals." + args[1] + ".X", loc.getBlockX());
-										getConfig().set("portals." + args[1] + ".Y", loc.getBlockY());
-										getConfig().set("portals." + args[1] + ".Z", loc.getBlockZ());
-										
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bPortal &f" + args[1] 
-												+ " &bhas been created at " + loc.getBlockX() + ", " 
-												+ loc.getBlockY() + ", " + loc.getBlockZ() + "."));
-										
-										saveConfig();
-										reloadPlugin();
-										reloadPortals();
-										moveListener.getConfiguration(this);
+									getConfig().set("portals." + args[1] + ".world", loc.getWorld().getName());
+									
+									if (args[2].equalsIgnoreCase("random")) {
+										getConfig().set("portals." + args[1] + ".destination", "random");
 									} else {
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease select a block "
-												+ "to use as the portal block!"));
+										getConfig().set("portals." + args[1] + ".destination", args[2]);
 									}
+									
+									if (args.length > 3) {
+										getConfig().set("portals." + args[1] + ".spawn-group", args[3]);
+									} else {
+										getConfig().set("portals." + args[1] + ".spawn-group", "default");
+									}
+									
+									getConfig().set("portals." + args[1] + ".X", loc.getBlockX());
+									getConfig().set("portals." + args[1] + ".Y", loc.getBlockY());
+									getConfig().set("portals." + args[1] + ".Z", loc.getBlockZ());
+									
+									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bPortal &f" + args[1] 
+											+ " &bhas been created at " + loc.getBlockX() + ", " 
+											+ loc.getBlockY() + ", " + loc.getBlockZ() + "."));
+									
+									saveConfig();
+									reloadPlugin();
+									reloadPortals();
+									moveListener.getConfiguration(this);
 								}
 							}
 						} else {

@@ -1,6 +1,6 @@
 name: MultiSpawnPlus
 main: io.github.ultimatedillon.multispawnplus.MultiSpawnPlus
-version: 1.2.27
+version: 1.2.39
 author: UltimateDillon
 description: MultiSpawnPlus - An advanced spawning and teleportation plugin by UltimateDillon.
 commands:
