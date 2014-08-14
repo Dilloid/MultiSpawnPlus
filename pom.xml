@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.ultimatedillon</groupId>
   <artifactId>MultiSpawnPlus</artifactId>
-  <version>0.3.5</version>
+  <version>1.2.39</version>
   
   <build>
     <plugins>
@@ -15,6 +15,8 @@
             </configuration>
         </plugin>
     </plugins>
+    
+    <finalName>${artifactId}</finalName>
   </build>
   
   <repositories>

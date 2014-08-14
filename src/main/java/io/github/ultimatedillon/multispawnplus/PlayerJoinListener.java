@@ -1,5 +1,6 @@
 package io.github.ultimatedillon.multispawnplus;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
@@ -7,48 +8,76 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-public final class PlayerJoinListener implements Listener {
-	FileConfiguration config;
-	String[] allowed;
+public class PlayerJoinListener implements Listener {
+	private PlayerConfig playerConfig;
+	private String[] allowed;
+	private String[] group;
 	
 	public PlayerJoinListener(MultiSpawnPlus plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        config = plugin.getConfig();
         allowed = plugin.allowed;
+        
+        playerConfig = new PlayerConfig(plugin);
     }
+	
+	public FileConfiguration getConfig() {
+		return playerConfig.getConfig();
+	}
+	
+	public void saveConfig() {
+		playerConfig.saveConfig();
+	}
 	
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		if (!event.getPlayer().hasPlayedBefore()) {
-			Bukkit.getLogger().info("MultiSpawnPlus: " + event.getPlayer().getName() + " has joined for the first time.");
+		Player player = event.getPlayer();
+		
+		if (!getConfig().contains("players." + player.getUniqueId().toString())) {
+			getConfig().set("players." + player.getUniqueId().toString() + ".name", player.getName());
+			saveConfig();
 			
-			if (config.getBoolean("options.random-spawn-on-join") == true) {
+			Bukkit.getLogger().info("MultiSpawnPlus: " + player.getName() + " has joined for the first time! "
+					+ "Writing player info to players.yml");
+			
+			if (getConfig().getBoolean("options.random-spawn-on-join") == true) {
+				String spawnGroup = getConfig().getString("options.first-join-spawn-group");
+				ArrayList<String> groupList = new ArrayList<String>();
+				for (int i = 0; i < allowed.length; i++) {
+					if (getConfig().getString("spawns." + allowed[i] + ".spawn-group").equalsIgnoreCase(spawnGroup)) {
+						groupList.add(allowed[i]);
+					}
+				}
+				group = groupList.toArray(new String[groupList.size()]);
+				
 				Random rand = new Random();
-				int i = rand.nextInt(allowed.length);
+				int i = rand.nextInt(group.length);
 				
-				World world = Bukkit.getWorld(config.getString("spawns." + allowed[i] + ".world"));
-				int x = config.getInt("spawns." + allowed[i] + ".X");
-				int y = config.getInt("spawns." + allowed[i] + ".Y");
-				int z = config.getInt("spawns." + allowed[i] + ".Z");
-				int yaw = config.getInt("spawns." + allowed[i] + ".yaw");
-				int pitch = config.getInt("spawns." + allowed[i] + ".pitch");
+				World world = Bukkit.getWorld(getConfig().getString("spawns." + allowed[i] + ".world"));
+				double x = getConfig().getInt("spawns." + group[i] + ".X") + 0.5;
+				double y = getConfig().getInt("spawns." + group[i] + ".Y");
+				double z = getConfig().getInt("spawns." + group[i] + ".Z") + 0.5;
+				int yaw = getConfig().getInt("spawns." + group[i] + ".yaw");
+				int pitch = getConfig().getInt("spawns." + group[i] + ".pitch");
 				
-				Bukkit.getLogger().info("MultiSpawnPlus: - Teleporting " + event.getPlayer().getName() + " to " + allowed[i]
+				Bukkit.getLogger().info("MultiSpawnPlus: - Teleporting " + player.getName() + " to " + group[i]
 						+ "(" + world + ", " + x + ", " + y + ", " + z + ", " + yaw + ", " + pitch + ")");
 				
 				if (world == null) {
-					event.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat world does not exist!"));
+					player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat world does not exist!"));
 				} else {
 					Location loc = new Location(world, x, y, z, yaw, pitch);
-					event.getPlayer().teleport(loc);
+					player.teleport(loc);
 				}
 			}
 		} else {
-			Bukkit.getLogger().info("MultiSpawnPlus: " + event.getPlayer().getName() + " has joined!");
+			Bukkit.getLogger().info("MultiSpawnPlus: " + player.getName() + " has joined!");
+			getConfig().set("players." + player.getUniqueId().toString() + ".name", player.getName());
+			saveConfig();
 		}
 	}
 }
