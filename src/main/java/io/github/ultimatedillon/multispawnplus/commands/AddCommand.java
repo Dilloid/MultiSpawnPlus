@@ -1,6 +1,12 @@
 package io.github.ultimatedillon.multispawnplus.commands;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -11,82 +17,225 @@ import io.github.ultimatedillon.multispawnplus.MultiSpawnPlus;
 
 public class AddCommand implements CommandExecutor {
 	private MultiSpawnPlus plugin;
+	private ArrayList<String> validTraits;
 	
 	public AddCommand(MultiSpawnPlus plugin) {
 		this.plugin = plugin;
+		this.validTraits = new ArrayList<String>(Arrays.asList("-r", "-g", "-d"));
 	}
 	
 	public FileConfiguration getConfig() {
 		return plugin.getConfig();
 	}
 	
-	public void saveConfig() {
-		plugin.saveConfig();
+	private boolean validTrait(String trait) {
+		for (String valid : validTraits) {
+			if (trait.substring(0, 2).equalsIgnoreCase(valid)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public void sendMessage(Player target, String message) {
+		target.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (sender instanceof Player) {
 			Player player = (Player) sender;
 			
-			if (player.hasPermission("multispawnplus.add.spawn")) {
-				if (args.length < 2) {
-					player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a name for this "
-							+ "spawnpoint, whether it can be used as a random spawn, and the spawn group it should "
-							+ "be added to."));
-					player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eLeave &f<spawn group> "
-							+ "&eblank to set the spawn group to 'default')"));
-					player.sendMessage("Usage: /msp add <name> [true|false] <spawn group>");
-				} else if (args.length > 3) {
-					player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
-					player.sendMessage("Usage: /msp add <name> [true|false] <spawn group>");
-				} else {
-					if (args[0] == "random") {
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cSpawnpoints must not be "
-								+ "named 'random'!"));
-					} else if (getConfig().contains("spawns." + args[0])) {
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cA spawnpoint with that name "
-								+ "already exists!"));
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bUse &f/msp delete <name> &bto "
-								+ "delete existing spawnpoints."));
-					} else {
-						if (args[1].equalsIgnoreCase("true") || args[1].equalsIgnoreCase("false")) {
-							getConfig().set("spawns." + args[1] + ".world", player.getWorld().getName());
-							getConfig().set("spawns." + args[1] + ".allow-random-spawn", new Boolean(args[2]));
-							
-							if (args.length > 2) {
-								getConfig().set("spawns." + args[0] + ".spawn-group", args[2]);
-							} else {
-								getConfig().set("spawns." + args[0] + ".spawn-group", "default");
-							}
-							
-							getConfig().set("spawns." + args[0] + ".X", player.getLocation().getBlockX());
-							getConfig().set("spawns." + args[0] + ".Y", player.getLocation().getBlockY());
-							getConfig().set("spawns." + args[0] + ".Z", player.getLocation().getBlockZ());
-							getConfig().set("spawns." + args[0] + ".yaw", player.getLocation().getYaw());
-							getConfig().set("spawns." + args[0] + ".pitch", player.getLocation().getPitch());
-							
-							plugin.saveConfig();
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bSpawnpoint &f" + args[1]
-									+ " &bhas been created!"));
-							
-							plugin.reloadPlugin();
-							plugin.reloadPortals();
-							
-							return true;
-						} else if (!args[1].equalsIgnoreCase("true") && !args[1].equalsIgnoreCase("false")) {
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cSyntax Error!"));
-							player.sendMessage("Usage: /msp add <name> [true|false] <spawn group>");
-						} else {
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cDerp. "
-									+ "Something went wrong!"));
-						}
-					}
-				}
+			if (args.length < 1) {
+				sendMessage(player, "&cNot enough arguments!");
+				return false;
 			} else {
-				player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
+				if (args[0].equalsIgnoreCase("spawn")) {
+					if (player.hasPermission("multispawnplus.add.spawn")) {
+						if (args.length < 2) {
+							sendMessage(player, "&cNot enough arguments!");
+						} else {
+							Location loc = player.getLocation();
+							
+							if (getConfig().contains("spawns." + args[1])) {
+								sendMessage(player, "&cSpawn point &f" + args[1] + " &calready exists!");
+							} else {
+								getConfig().set("spawns." + args[1] + ".world", loc.getWorld().getName());
+								
+								String yaw = String.valueOf((int) loc.getYaw());
+								String pitch = String.valueOf((int) loc.getPitch());
+								
+								getConfig().set("spawns." + args[1] + ".location", ""
+										+ loc.getBlockX() + ", " 
+										+ loc.getBlockY() + ", " 
+										+ loc.getBlockZ() + ", " 
+										+ yaw + ", " + pitch);
+								
+								boolean randomSet = false;
+								boolean groupSet = false;
+								
+								if (args.length > 2) {
+									//region Traits
+									ArrayList<String> traits = new ArrayList<String>();
+									
+									for (int i = 2; i < args.length; i++) {
+										traits.add(args[i]);
+									}
+									
+									for (String trait : traits) {
+										if (validTrait(trait.toLowerCase())) {
+											sendMessage(player, trait);
+											
+											if (trait.substring(0, 2).equalsIgnoreCase("-r")) {
+												if (trait.length() > 2) {
+													sendMessage(player, "Warning: Incorrect Usage of the &f-r &ctrait!");
+												}
+												
+												getConfig().set("spawns." + args[1] + ".allow-random-spawn", true);
+												randomSet = true;
+											} else if (trait.substring(0, 2).equalsIgnoreCase("-g")) {
+												if (trait.length() < 4 || 
+													!trait.substring(2, 3).equalsIgnoreCase(":")) {
+													sendMessage(player, "&cError! &f-g &cmust be followed by '&f:&c' then the name of the spawn group.");
+												} else {
+													String group = trait.substring(3, trait.length());
+													getConfig().set("spawns." + args[1] + ".spawn-group", group);
+													groupSet = true;
+												}
+											} else if (trait.substring(0, 2).equalsIgnoreCase("-d")) {
+												sendMessage(player, "&cThe &f-d &ctrait does not apply to spawn points!");
+											}
+										}
+									}
+									//endregion
+								}
+								
+								if (!randomSet) {
+									getConfig().set("spawns." + args[1] + ".allow-random-spawn", false);
+								}
+								
+								if (!groupSet) {
+									getConfig().set("spawns." + args[1] + ".spawn-group", "default");
+								}
+								
+								plugin.saveConfig();
+								sendMessage(player, "&bSpawn point &f" + args[1] + " &bhas been created at &f" 
+										+ loc.getBlockX() + "&b, &f" 
+										+ loc.getBlockY() + "&b, &f" 
+										+ loc.getBlockZ() + "&b in &f"
+										+ loc.getWorld().getName());
+								
+								player.getLocation().subtract(0, 1, 0).getBlock().setType(Material.WOOL);
+								
+								plugin.reloadPlugin();
+								plugin.reloadPortals();
+								
+								return true;
+							}
+						}
+					} else {
+						sendMessage(player, "&4You do not have permission to do this");
+					}
+				} else if (args[0].equalsIgnoreCase("portal")) {
+					if (player.hasPermission("multispawnplus.add.portal")) {
+						if (args.length < 2) {
+							sendMessage(player, "&cNot enough arguments!");
+						} else {
+							@SuppressWarnings("deprecation")
+							Block targetBlock = player.getTargetBlock(null, 8);
+							Location loc = targetBlock.getLocation();
+							
+							if (getConfig().contains("portals." + args[1])) {
+								sendMessage(player, "&cPortal &f" + args[1] + " &calready exists!");
+							} else if (targetBlock.getType().equals(Material.AIR)) {
+								sendMessage(player, "&cPlease target the block to set as the portal block!");
+							} else {
+								getConfig().set("portals." + args[1] + ".world", loc.getWorld().getName());
+								getConfig().set("portals." + args[1] + ".location", ""
+										+ loc.getBlockX() + ", " 
+										+ loc.getBlockY() + ", " 
+										+ loc.getBlockZ());
+								
+								boolean randomSet = false;
+								boolean groupSet = false;
+								boolean destSet = false;
+								
+								if (args.length > 2) {
+									//region Traits
+									ArrayList<String> traits = new ArrayList<String>();
+									
+									for (int i = 2; i < args.length; i++) {
+										traits.add(args[i]);
+									}
+									
+									for (String trait : traits) {
+										if (validTrait(trait.toLowerCase())) {
+											sendMessage(player, trait);
+											
+											if (trait.substring(0, 2).equalsIgnoreCase("-r")) {
+												if (trait.length() > 2) {
+													sendMessage(player, "Warning: Incorrect Usage of the &f-r &ctrait!");
+												}
+												
+												getConfig().set("portals." + args[1] + ".random-target", true);
+												randomSet = true;
+											} else if (trait.substring(0, 2).equalsIgnoreCase("-g")) {
+												if (trait.length() < 4 || 
+													!trait.substring(2, 3).equalsIgnoreCase(":")) {
+													sendMessage(player, "&cError! &f-g &cmust be followed by '&f:&c' then the name of the spawn group.");
+												} else {
+													String group = trait.substring(3, trait.length());
+													getConfig().set("portals." + args[1] + ".spawn-group", group);
+													groupSet = true;
+												}
+											} else if (trait.substring(0, 2).equalsIgnoreCase("-d")) {
+												if (trait.length() < 4 || 
+													!trait.substring(2, 3).equalsIgnoreCase(":")) {
+													sendMessage(player, "&cError! &f-f &cmust be followed by '&f:&c' then the name of the destination spawn point.");
+												} else {
+													String group = trait.substring(3, trait.length());
+													getConfig().set("portals." + args[1] + ".destination", group);
+													destSet = true;
+												}
+											}
+										}
+									}
+									//endregion
+								}
+								
+								if (!randomSet) {
+									getConfig().set("portals." + args[1] + ".allow-random-spawn", false);
+								}
+								
+								if (!groupSet) {
+									getConfig().set("portals." + args[1] + ".spawn-group", "default");
+								}
+								
+								if (!destSet) {
+									getConfig().set("portals." + args[1] + ".destination", "default");
+								}
+								
+								plugin.saveConfig();
+								sendMessage(player, "&bPortal &f" + args[1] + " &bhas been created at &f" 
+										+ loc.getBlockX() + "&b, &f" 
+										+ loc.getBlockY() + "&b, &f" 
+										+ loc.getBlockZ() + "&b in &f"
+										+ loc.getWorld().getName());
+								
+								plugin.reloadPlugin();
+								plugin.reloadPortals();
+								
+								return true;
+							}
+						}
+					} else {
+						sendMessage(player, "&4You do not have permission to do this");
+					}
+				} else {
+					sendMessage(player, "&cInvalid arguments.");
+				}
 			}
 		} else {
-			sender.sendMessage("MultiSpawnPlus: This command can only be run by a player");
+			sender.sendMessage("[MultiSpawnPlus] This command can only be run by a player");
 		}
 		
 		return false;

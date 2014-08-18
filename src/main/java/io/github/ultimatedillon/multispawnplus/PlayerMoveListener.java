@@ -18,8 +18,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 public class PlayerMoveListener implements Listener {
 	MultiSpawnPlus plugin;
 	String[] portals;
-	String[] allowed;
-	String[] group;
 	String blockGroup;
 	String destination = "";
 	Block portal = null;
@@ -29,7 +27,6 @@ public class PlayerMoveListener implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         
         this.plugin = plugin;
-        allowed = plugin.allowed;
     }
 	
 	public FileConfiguration getConfig() {
@@ -54,28 +51,47 @@ public class PlayerMoveListener implements Listener {
 			if (portals != null) {
 				for (int i = 0; i < portals.length; i++) {
 					World blockWorld = Bukkit.getWorld(getConfig().getString("portals." + portals[i] + ".world"));
-					int blockX = getConfig().getInt("portals." + portals[i] + ".X");
-					int blockY = getConfig().getInt("portals." + portals[i] + ".Y");
-					int blockZ = getConfig().getInt("portals." + portals[i] + ".Z");
 					
-				    Location portalLoc = new Location(blockWorld, blockX, blockY, blockZ);
+					String portalLocString = getConfig().getString("portals." + portals[i] + ".location");
+					String[] portalLocArray = portalLocString.replace(" ", "").split(",");
+					
+				    Location portalLoc = new Location(blockWorld, 
+				    		Double.valueOf(portalLocArray[0]), 
+				    		Double.valueOf(portalLocArray[1]), 
+				    		Double.valueOf(portalLocArray[2]));
+				    
 				    portal = portalLoc.getBlock();
 				    
 				    if (below.getLocation().toString().equalsIgnoreCase(portal.getLocation().toString())) {
 				    	Boolean canTeleport = true;
-						Bukkit.getLogger().info(player + "triggered the " + portals[i] + " portal!");
+						Bukkit.getLogger().info(player.getName() + " triggered the " + portals[i] + " portal!");
 						
-						if (!getConfig().getString("portals." + portals[i] + ".destination").equalsIgnoreCase("random")) {
+						boolean randVal = getConfig().getBoolean("portals." + portals[i] + ".random-target");
+						
+						if (!randVal) {
 							destination = getConfig().getString("portals." + portals[i] + ".destination");
 						} else {
 							blockGroup = getConfig().getString("portals." + portals[i] + ".spawn-group");
 							ArrayList<String> groupList = new ArrayList<String>();
-							for (int j = 0; j < allowed.length; j++) {
-								if (getConfig().getString("spawns." + allowed[j] + ".spawn-group").equalsIgnoreCase(blockGroup)) {
-									groupList.add(allowed[j]);
+							
+							Set<String> spawns = getConfig().getConfigurationSection("spawns").getKeys(false);
+							ArrayList<String> allowed = new ArrayList<String>();
+							
+							for (String item : spawns) {
+								if (getConfig().getBoolean("spawns." + item + ".allow-random-spawn") == true) {
+									if (item != null && item != "null") {
+										allowed.add(item);
+									}
 								}
 							}
-							group = groupList.toArray(new String[groupList.size()]);
+							
+							for (String item : allowed) {
+								if (getConfig().getString("spawns." + item + ".spawn-group").equalsIgnoreCase(blockGroup)) {
+									groupList.add(item);
+								}
+							}
+							
+							String[] group = groupList.toArray(new String[groupList.size()]);
 							
 							try {
 								Random rand = new Random();
@@ -89,20 +105,23 @@ public class PlayerMoveListener implements Listener {
 						
 						if (canTeleport == true) {
 							World destWorld = Bukkit.getWorld(getConfig().getString("spawns." + destination + ".world"));
-							double x = getConfig().getInt("spawns." + destination + ".X") + 0.5;
-							double y = getConfig().getInt("spawns." + destination + ".Y");
-							double z = getConfig().getInt("spawns." + destination + ".Z") + 0.5;
-							int yaw = getConfig().getInt("spawns." + destination + ".yaw");
-							int pitch = getConfig().getInt("spawns." + destination + ".pitch");
+							String locString = getConfig().getString("spawns." + destination + ".location");
+							String[] locArray = locString.replace(" ", "").split(",");
 							
 							if (destWorld == null) {
 								event.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat world does not exist!"));
 							} else {
-								Location target = new Location(destWorld, x, y, z, yaw, pitch);
+								Location target = new Location(destWorld, 
+										Double.valueOf(locArray[0]) + 0.5, 
+										Double.valueOf(locArray[1]), 
+										Double.valueOf(locArray[2]) + 0.5, 
+										Integer.valueOf(locArray[3]), 
+										Integer.valueOf(locArray[4]));
+								
 								event.getPlayer().teleport(target);
 								
-								Bukkit.getLogger().info("MultiSpawnPlus: - Teleporting " + event.getPlayer().getName() + " to " + destination
-									+ "(" + destWorld + ", " + x + ", " + y + ", " + z + ", " + yaw + ", " + pitch + ")");
+								Bukkit.getLogger().info("[MultiSpawnPlus] Teleporting " + event.getPlayer().getName() + " to " + destination
+									+ " (" + locString + " in " + destWorld.getName() + ")");
 							}
 						}
 					}

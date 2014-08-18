@@ -13,9 +13,7 @@ import net.gravitydevelopment.updater.Updater;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -23,7 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.mcstats.Metrics;
 
 public final class MultiSpawnPlus extends JavaPlugin {
-	private String version = "v1.3.02";
+	private String version = "v1.3.40";
 	
 	private String[] spawns;
 	public String[] allowed;
@@ -54,12 +52,12 @@ public final class MultiSpawnPlus extends JavaPlugin {
 	            metrics = new Metrics(this);
 	            metrics.start();
 	            
-	            getLogger().info("MultiSpawnPlus: Succesfully submitting stats to MCStats.org!");
+	            getLogger().info("[MultiSpawnPlus] Succesfully submitting stats to MCStats.org!");
 	        } catch (IOException e) {
-	            getLogger().info("MultiSpawnPlus: Failed to submit stats to MCStats.org! Error: " + e);
+	            getLogger().info("[MultiSpawnPlus] Failed to submit stats to MCStats.org! Error: " + e);
 	        }
         } else {
-        	getLogger().info("MultiSpawnPlus: Plugin Metrics disallowed! Disabling submission of stats to MCStats.org...");
+        	getLogger().info("[MultiSpawnPlus] Plugin Metrics disallowed! Disabling submission of stats to MCStats.org...");
         }
         
         if (getConfig().getBoolean("options.auto-update") == true) {
@@ -69,13 +67,17 @@ public final class MultiSpawnPlus extends JavaPlugin {
         	
         	String latest = updater.getLatestName().substring(15);
         	if (version.equalsIgnoreCase(latest)) {
-        		getLogger().info("MultiSpawnPlus: No updates available.");
+        		getLogger().info("[MultiSpawnPlus] No updates available.");
         	} else {
-        		getLogger().info("MultiSpawnPlus: Update available! (" + latest + ")");
-        		getLogger().info("MultiSpawnPlus: Download here: " + updater.getLatestFileLink());
+        		getLogger().info("[MultiSpawnPlus] Update available! (" + latest + ")");
+        		getLogger().info("[MultiSpawnPlus] Download here: " + updater.getLatestFileLink());
         	}
         }
     }
+	
+	public void sendMessage(CommandSender sender, String message) {
+		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
+	}
 	
 	public void reloadPlugin() {
 		reloadConfig();
@@ -88,8 +90,8 @@ public final class MultiSpawnPlus extends JavaPlugin {
 			defaultWorld.getSpawnLocation().getBlockZ()
 		};
 		
-		float yaw = defaultWorld.getSpawnLocation().getYaw();
-		float pitch = defaultWorld.getSpawnLocation().getPitch();
+		int yaw = (int) defaultWorld.getSpawnLocation().getYaw();
+		int pitch = (int) defaultWorld.getSpawnLocation().getPitch();
 		
 		if (!new File(getDataFolder(), "config.yml").exists()) {
 			getConfig().addDefault("version", version);
@@ -98,20 +100,16 @@ public final class MultiSpawnPlus extends JavaPlugin {
 			getConfig().addDefault("options.auto-update", false);
 			getConfig().addDefault("options.allow-plugin-metrics", true);
 			getConfig().addDefault("spawns.default.world", defaultWorld.getName());
+			getConfig().addDefault("spawns.default.location", coords[0] + ", " + coords[1] 
+					+ ", " + coords[2] + ", " + yaw + ", " + pitch);
 			getConfig().addDefault("spawns.default.allow-random-spawn", false);
 			getConfig().addDefault("spawns.default.spawn-group", "default");
-			getConfig().addDefault("spawns.default.X", coords[0]);
-			getConfig().addDefault("spawns.default.Y", coords[1]);
-			getConfig().addDefault("spawns.default.Z", coords[2]);
-			getConfig().addDefault("spawns.default.yaw", Float.toString(yaw));
-			getConfig().addDefault("spawns.default.pitch", Float.toString(pitch));
 			
 			getConfig().addDefault("portals.default.world", defaultWorld.getName());
+			getConfig().addDefault("portals.default.location", "0, 0, 0");
 			getConfig().addDefault("portals.default.destination", "default");
 			getConfig().addDefault("portals.default.spawn-group", "default");
-			getConfig().addDefault("portals.default.X", 0);
-			getConfig().addDefault("portals.default.Y", 0);
-			getConfig().addDefault("portals.default.Z", 0);
+			getConfig().addDefault("portals.default.random-target", false);
 			
 			getConfig().options().copyDefaults(true);
 		}
@@ -160,6 +158,12 @@ public final class MultiSpawnPlus extends JavaPlugin {
 				getConfig().set("spawns." + spawns[i] + ".world", defaultWorld.getName());
 			}
 			
+			if (!getConfig().contains("spawns." + spawns[i] + ".location") ||
+				getConfig().get("spawns." + spawns[i] + ".location") == null) {
+				getConfig().set("spawns.default.location", coords[0] + ", " + coords[1] 
+						+ ", " + coords[2] + ", " + yaw + ", " + pitch);
+			}
+			
 			if (!getConfig().contains("spawns." + spawns[i] + ".allow-random-spawn")) {
 				getConfig().set("spawns." + spawns[i] + ".allow-random-spawn", new Boolean(false));
 			}
@@ -167,31 +171,6 @@ public final class MultiSpawnPlus extends JavaPlugin {
 			if (!getConfig().contains("spawns." + spawns[i] + ".spawn-group") ||
 				getConfig().get("spawns." + spawns[i] + ".spawn-group") == null) {
 				getConfig().set("spawns." + spawns[i] + ".spawn-group", "default");
-			}
-			
-			if (!getConfig().contains("spawns." + spawns[i] + ".X") ||
-				getConfig().get("spawns." + spawns[i] + ".X") == null) {
-				getConfig().set("spawns." + spawns[i] + ".X", coords[0]);
-			}
-			
-			if (!getConfig().contains("spawns." + spawns[i] + ".Y") ||
-				getConfig().get("spawns." + spawns[i] + ".Y") == null) {
-				getConfig().set("spawns." + spawns[i] + ".Y", coords[1]);
-			}
-			
-			if (!getConfig().contains("spawns." + spawns[i] + ".Z") ||
-				getConfig().get("spawns." + spawns[i] + ".Z") == null) {
-				getConfig().set("spawns." + spawns[i] + ".Z", coords[2]);
-			}
-			
-			if (!getConfig().contains("spawns." + spawns[i] + ".yaw") ||
-				getConfig().get("spawns." + spawns[i] + ".yaw") == null) {
-				getConfig().set("spawns." + spawns[i] + ".yaw", Float.toString(yaw));
-			}
-			
-			if (!getConfig().contains("spawns." + spawns[i] + ".pitch") ||
-				getConfig().get("spawns." + spawns[i] + ".pitch") == null) {
-				getConfig().set("spawns." + spawns[i] + ".pitch", Float.toString(pitch));
 			}
 		}
 		
@@ -210,6 +189,11 @@ public final class MultiSpawnPlus extends JavaPlugin {
 				getConfig().set("portals." + portals[i] + ".world", defaultWorld.getName());
 			}
 			
+			if (!getConfig().contains("portals." + portals[i] + ".location") ||
+					getConfig().get("portals." + portals[i] + ".location") == null) {
+					getConfig().set("portals.default.location", "0, 0, 0");
+				}
+			
 			if (!getConfig().contains("portals." + portals[i] + ".destination")) {
 				getConfig().set("portals." + portals[i] + ".destination", "default");
 			}
@@ -219,29 +203,19 @@ public final class MultiSpawnPlus extends JavaPlugin {
 				getConfig().set("portals." + portals[i] + ".spawn-group", "default");
 			}
 			
-			if (!getConfig().contains("portals." + portals[i] + ".X") ||
-				getConfig().get("portals." + portals[i] + ".X") == null) {
-				getConfig().set("portals." + portals[i] + ".X", coords[0]);
-			}
-			
-			if (!getConfig().contains("portals." + portals[i] + ".Y") ||
-				getConfig().get("portals." + portals[i] + ".Y") == null) {
-				getConfig().set("portals." + portals[i] + ".Y", coords[1]);
-			}
-			
-			if (!getConfig().contains("portals." + portals[i] + ".Z") ||
-				getConfig().get("portals." + portals[i] + ".Z") == null) {
-				getConfig().set("portals." + portals[i] + ".Z", coords[2]);
+			if (!getConfig().contains("portals." + portals[i] + ".random-target") ||
+				getConfig().get("portals." + portals[i] + ".random-target") == null) {
+				getConfig().set("portals." + portals[i] + ".random-target", false);
 			}
 		}
 		
 		if (validFirstGroup() == false) {
 			if (getConfig().getBoolean("options.random-spawn-on-join") == true) {
-				Bukkit.getLogger().info("MultiSpawnPlus: The spawn group you have chosen under 'first-join-spawn-group' "
+				Bukkit.getLogger().info("[MultiSpawnPlus] The spawn group you have chosen under 'first-join-spawn-group' "
 						+ "doesn't have any random spawn points to use! Disabling random spawning on first join...");
 				getConfig().set("options.random-spawn-on-join", new Boolean(false));
 			} else {
-				Bukkit.getLogger().info("MultiSpawnPlus: The spawn group you have chosen under 'first-join-spawn-group' "
+				Bukkit.getLogger().info("[MultiSpawnPlus] The spawn group you have chosen under 'first-join-spawn-group' "
 						+ "doesn't have any random spawn points to use!");
 			}
 		}
@@ -265,7 +239,17 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		portals = portalList.toArray(new String[portalList.size()]);
 	}
 	
-	@SuppressWarnings("deprecation")
+	public String[] aliasArgs(String[] args) {
+		ArrayList<String> argsList = new ArrayList<String>();
+		
+		for (int i = 1; i < args.length; i++) {
+			argsList.add(args[i]);
+		}
+		
+		String[] arr = argsList.toArray(new String[argsList.size()]);
+		return arr;
+	}
+	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (cmd.getName().equalsIgnoreCase("multispawnplus")) {
@@ -278,76 +262,12 @@ public final class MultiSpawnPlus extends JavaPlugin {
 			} else {
 				
 				if (args[0].equalsIgnoreCase("add")) {
-					getCommand("mspAdd").execute(sender, label, args);
-					
-				//region AddPortal
-				} else if (args[0].equalsIgnoreCase("addportal")) {
-					if (sender instanceof Player) {
-						Player player = (Player) sender;
-						
-						if (player.hasPermission("multispawnplus.add.portal")) {
-							if (args.length < 3) {
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a name for this "
-										+ "portal block, the destination spawnpoint, and the spawn group it should use for "
-										+ "random spawning."));
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eSet &f<destination> &eto "
-										+ "'random' if you want the destination be random, and leave &f<random group> "
-										+ "&eblank to set the spawn group to 'default')"));
-								player.sendMessage("Usage: /msp addportal <name> <destination> <spawn-group>");
-							} else if (args.length > 4) {
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
-								player.sendMessage("Usage: /msp addportal <name> <destination> <spawn-group>");
-							} else {
-								Block targetBlock = player.getTargetBlock(null, 8);
-								Location loc = targetBlock.getLocation();
-								
-								if (getConfig().contains("portals." + args[1])) {
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cA portal with that name "
-											+ "already exists!"));
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bUse &f/msp deleteportal "
-											+ "<name> &bto delete existing portal blocks."));
-								} else if (targetBlock.getType().equals(Material.AIR)) {
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease select a block "
-											+ "to use as the portal block!"));
-								} else if (!args[2].equalsIgnoreCase("random") && 
-										   !getConfig().contains("spawns." + args[2])) {
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThe "
-											+ "destination spawn point doesn't exist!"));
-								} else {
-									getConfig().set("portals." + args[1] + ".world", loc.getWorld().getName());
-									
-									if (args[2].equalsIgnoreCase("random")) {
-										getConfig().set("portals." + args[1] + ".destination", "random");
-									} else {
-										getConfig().set("portals." + args[1] + ".destination", args[2]);
-									}
-									
-									if (args.length > 3) {
-										getConfig().set("portals." + args[1] + ".spawn-group", args[3]);
-									} else {
-										getConfig().set("portals." + args[1] + ".spawn-group", "default");
-									}
-									
-									getConfig().set("portals." + args[1] + ".X", loc.getBlockX());
-									getConfig().set("portals." + args[1] + ".Y", loc.getBlockY());
-									getConfig().set("portals." + args[1] + ".Z", loc.getBlockZ());
-									
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bPortal &f" + args[1] 
-											+ " &bhas been created at " + loc.getBlockX() + ", " 
-											+ loc.getBlockY() + ", " + loc.getBlockZ() + "."));
-									
-									saveConfig();
-									reloadPlugin();
-									reloadPortals();
-								}
-							}
-						} else {
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
-						}
+					if (args.length > 2) {
+						getCommand("mspAdd").execute(sender, label, aliasArgs(args));
 					} else {
-						sender.sendMessage("MultiSpawnPlus: This command can only be run by a player");
+						sendMessage(sender, "&cNot enough arguments!");
+						return false;
 					}
-				//endregion
 				
 				//region Delete
 				} else if (args[0].equalsIgnoreCase("delete")) {
@@ -378,10 +298,10 @@ public final class MultiSpawnPlus extends JavaPlugin {
 						}
 					} else {
 						if (args.length < 2) {
-							sender.sendMessage("MultiSpawnPlus: Please enter a spawnpoint to delete.");
+							sender.sendMessage("[MultiSpawnPlus] Please enter a spawnpoint to delete.");
 						} else if (args.length > 2) {
-							sender.sendMessage("MultiSpawnPlus: Too many arguments!");
-							sender.sendMessage("MultiSpawnPlus: Usage: /msp delete <name>");
+							sender.sendMessage("[MultiSpawnPlus] Too many arguments!");
+							sender.sendMessage("[MultiSpawnPlus] Usage: /msp delete <name>");
 						} else {
 							if (!getConfig().contains(args[1])) {
 								getConfig().set("spawns." + args[1], null);
@@ -389,9 +309,9 @@ public final class MultiSpawnPlus extends JavaPlugin {
 								saveConfig();
 								reloadPlugin();
 								reloadPortals();
-								sender.sendMessage("MultiSpawnPlus: Spawnpoint " + args[1] + " deleted.");
+								sender.sendMessage("[MultiSpawnPlus] Spawnpoint " + args[1] + " deleted.");
 							} else {
-								sender.sendMessage("MultiSpawnPlus: That spawnpoint doesn't exist.");
+								sender.sendMessage("[MultiSpawnPlus] That spawnpoint doesn't exist.");
 							}
 						}
 					}
@@ -426,10 +346,10 @@ public final class MultiSpawnPlus extends JavaPlugin {
 						}
 					} else {
 						if (args.length < 2) {
-							sender.sendMessage("MultiSpawnPlus: Please enter a portal to delete.");
+							sender.sendMessage("[MultiSpawnPlus] Please enter a portal to delete.");
 						} else if (args.length > 2) {
-							sender.sendMessage("MultiSpawnPlus: Too many arguments!");
-							sender.sendMessage("MultiSpawnPlus: Usage: /msp delportal <name>");
+							sender.sendMessage("[MultiSpawnPlus] Too many arguments!");
+							sender.sendMessage("[MultiSpawnPlus] Usage: /msp delportal <name>");
 						} else {
 							if (!getConfig().contains(args[1])) {
 								getConfig().set("portals." + args[1], null);
@@ -437,9 +357,9 @@ public final class MultiSpawnPlus extends JavaPlugin {
 								saveConfig();
 								reloadPlugin();
 								reloadPortals();
-								sender.sendMessage("MultiSpawnPlus: Portal " + args[1] + " deleted.");
+								sender.sendMessage("[MultiSpawnPlus] Portal " + args[1] + " deleted.");
 							} else {
-								sender.sendMessage("MultiSpawnPlus: That portal doesn't exist.");
+								sender.sendMessage("[MultiSpawnPlus] That portal doesn't exist.");
 							}
 						}
 					}
@@ -479,7 +399,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
 						}
 					} else {
-						sender.sendMessage("MultiSpawnPlus: This command can only be run by a player");
+						sender.sendMessage("[MultiSpawnPlus] This command can only be run by a player");
 					}
 				//endregion
 				
@@ -523,7 +443,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 									int yaw = getConfig().getInt("spawns." + destination + ".yaw");
 									int pitch = getConfig().getInt("spawns." + destination + ".pitch");
 									
-									getLogger().info("MultiSpawnPlus: - Teleporting " + player.getName() + " to " + destination
+									getLogger().info("[MultiSpawnPlus] Teleporting " + player.getName() + " to " + destination
 											+ "(" + world + ", " + x + ", " + y + ", " + z + ", " + yaw + ", " + pitch + ")");
 									
 									if (world == null) {
@@ -538,7 +458,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
 						}
 					} else {
-						sender.sendMessage("MultiSpawnPlus: This command can only be run by a player");
+						sender.sendMessage("[MultiSpawnPlus] This command can only be run by a player");
 					}
 				//endregion
 				
@@ -647,7 +567,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
 						}
 					} else {
-						sender.sendMessage("MultiSpawnPlus: All spawn points in order of creation:");
+						sender.sendMessage("[MultiSpawnPlus] All spawn points in order of creation:");
 						
 						for (int i = 0; i < spawns.length; i++) {
 							sender.sendMessage("- " + spawns[i]);
@@ -670,7 +590,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 					} else {
 						reloadPlugin();
 						reloadPortals();
-						sender.sendMessage("MultiSpawnPlus: Config reloaded!");
+						sender.sendMessage("[MultiSpawnPlus] Config reloaded!");
 					}
 				//endregion
 				
@@ -694,7 +614,7 @@ public final class MultiSpawnPlus extends JavaPlugin {
 						Player player = (Player) sender;
 						player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cInvalid argument!"));
 					} else {
-						sender.sendMessage("MultiSpawnPlus: Invalid argument!");
+						sender.sendMessage("[MultiSpawnPlus] Invalid argument!");
 					}
 					
 					return false;
