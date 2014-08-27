@@ -1,18 +1,18 @@
 package io.github.ultimatedillon.multispawnplus;
 
 import io.github.ultimatedillon.multispawnplus.commands.AddCommand;
+import io.github.ultimatedillon.multispawnplus.commands.DeleteCommand;
+import io.github.ultimatedillon.multispawnplus.commands.TeleportCommand;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.Set;
 
 import net.gravitydevelopment.updater.Updater;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -21,7 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.mcstats.Metrics;
 
 public final class MultiSpawnPlus extends JavaPlugin {
-	private String version = "v1.3.40";
+	private String version = "v1.3.73";
 	
 	private String[] spawns;
 	public String[] allowed;
@@ -46,6 +46,8 @@ public final class MultiSpawnPlus extends JavaPlugin {
         moveListener = new PlayerMoveListener(this);
         
         getCommand("mspAdd").setExecutor(new AddCommand(this));
+        getCommand("mspDelete").setExecutor(new DeleteCommand(this));
+        getCommand("mspTP").setExecutor(new TeleportCommand(this));
         
         if (getConfig().getBoolean("options.allow-plugin-metrics", true)) {
 	        try {
@@ -250,217 +252,74 @@ public final class MultiSpawnPlus extends JavaPlugin {
 		return arr;
 	}
 	
+	public String[] getLocations(boolean groupDefined, String group) {
+		try {
+			Set<String> spawns = getConfig().getConfigurationSection("spawns").getKeys(false);
+			ArrayList<String> allowed = new ArrayList<String>();
+			ArrayList<String> groupList = new ArrayList<String>();
+			
+			for (String item : spawns) {
+				if (getConfig().getBoolean("spawns." + item + ".allow-random-spawn") == true) {
+					if (item != null && item != "null") {
+						allowed.add(item);
+					}
+				}
+			}
+			
+			if (groupDefined) {
+				for (String item : allowed) {
+					if (getConfig().getString("spawns." + item + ".spawn-group").equalsIgnoreCase(group)) {
+						groupList.add(item);
+					}
+				}
+				return groupList.toArray(new String[groupList.size()]);
+			} else {
+				return allowed.toArray(new String[allowed.size()]);
+			}
+		} catch (Exception ex) {
+			return null;
+		}
+	}
+	
+	public Player getPlayerFromName(String player) {
+		for (Player p : Bukkit.getOnlinePlayers()) {
+			if (p.getName().equalsIgnoreCase(player) ||
+				p.getDisplayName().equalsIgnoreCase(player) ||
+				p.getName().toLowerCase().startsWith(player.toLowerCase())) {
+				return p;
+			}
+		}
+		
+		return null;
+	}
+	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (cmd.getName().equalsIgnoreCase("multispawnplus")) {
 			if (args.length < 1) {
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b#####################"));
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eMultiSpawnPlus " + version));
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eby UltimateDillon"));
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&b#####################"));
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "Use &6/msp help &ffor command syntax."));
+				sendMessage(sender, "&b#####################");
+				sendMessage(sender, "&eMultiSpawnPlus " + version);
+				sendMessage(sender, "&eby UltimateDillon");
+				sendMessage(sender, "&b#####################");
+				sendMessage(sender, "Use &6/msp help &ffor command syntax.");
 			} else {
-				
 				if (args[0].equalsIgnoreCase("add")) {
 					if (args.length > 2) {
 						getCommand("mspAdd").execute(sender, label, aliasArgs(args));
 					} else {
 						sendMessage(sender, "&cNot enough arguments!");
-						return false;
 					}
-				
-				//region Delete
-				} else if (args[0].equalsIgnoreCase("delete")) {
-					if (sender instanceof Player) {
-						Player player = (Player) sender;
-						
-						if (player.hasPermission("multispawnplus.delete.spawn")) {
-							if (args.length < 2) {
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a spawnpoint to delete."));
-							} else if (args.length > 2) {
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
-								player.sendMessage("Usage: /msp delete <name>");
-							} else {
-								if (getConfig().contains("spawns." + args[1])) {
-									getConfig().set("spawns." + args[1], null);
-
-									saveConfig();
-									reloadPlugin();
-									reloadPortals();
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bSpawnpoint &f" + args[1] 
-											+ " &bdeleted."));
-								} else {
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat spawnpoint doesn't exist."));
-								}
-							}
-						} else {
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
-						}
+				} else if (args[0].equalsIgnoreCase("delete")
+						|| args[0].equalsIgnoreCase("del")) {
+					if (args.length > 2) {
+						getCommand("mspDelete").execute(sender, label, aliasArgs(args));
 					} else {
-						if (args.length < 2) {
-							sender.sendMessage("[MultiSpawnPlus] Please enter a spawnpoint to delete.");
-						} else if (args.length > 2) {
-							sender.sendMessage("[MultiSpawnPlus] Too many arguments!");
-							sender.sendMessage("[MultiSpawnPlus] Usage: /msp delete <name>");
-						} else {
-							if (!getConfig().contains(args[1])) {
-								getConfig().set("spawns." + args[1], null);
-								
-								saveConfig();
-								reloadPlugin();
-								reloadPortals();
-								sender.sendMessage("[MultiSpawnPlus] Spawnpoint " + args[1] + " deleted.");
-							} else {
-								sender.sendMessage("[MultiSpawnPlus] That spawnpoint doesn't exist.");
-							}
-						}
+						sendMessage(sender, "&cNot enough arguments!");
 					}
-				//endregion
-					
-				//region DelPortal
-				} else if (args[0].equalsIgnoreCase("delportal")) {
-					if (sender instanceof Player) {
-						Player player = (Player) sender;
-						
-						if (player.hasPermission("multispawnplus.delete.portal")) {
-							if (args.length < 2) {
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a portal to delete."));
-							} else if (args.length > 2) {
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
-								player.sendMessage("Usage: /msp delportal <name>");
-							} else {
-								if (getConfig().contains("portals." + args[1])) {
-									getConfig().set("portals." + args[1], null);
-
-									saveConfig();
-									reloadPlugin();
-									reloadPortals();
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bPortal block &f" + args[1] 
-											+ " &bdeleted."));
-								} else {
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat portal doesn't exist."));
-								}
-							}
-						} else {
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
-						}
-					} else {
-						if (args.length < 2) {
-							sender.sendMessage("[MultiSpawnPlus] Please enter a portal to delete.");
-						} else if (args.length > 2) {
-							sender.sendMessage("[MultiSpawnPlus] Too many arguments!");
-							sender.sendMessage("[MultiSpawnPlus] Usage: /msp delportal <name>");
-						} else {
-							if (!getConfig().contains(args[1])) {
-								getConfig().set("portals." + args[1], null);
-								
-								saveConfig();
-								reloadPlugin();
-								reloadPortals();
-								sender.sendMessage("[MultiSpawnPlus] Portal " + args[1] + " deleted.");
-							} else {
-								sender.sendMessage("[MultiSpawnPlus] That portal doesn't exist.");
-							}
-						}
-					}
-				//endregion
-				
-				//region Spawn/Teleport
-				} else if (args[0].equalsIgnoreCase("teleport")) {
-					if (sender instanceof Player) {
-						Player player = (Player) sender;
-						
-						if (player.hasPermission("multispawnplus.spawn")) {
-							if (args.length < 2) {
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a spawnpoint or the &f-r &ctrait."));
-							} else if (args.length > 2) {
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
-								player.sendMessage("Usage: /msp tp ((name)) [traits]");
-							} else {
-								if (getConfig().contains("spawns." + args[1])) {
-									World world = Bukkit.getWorld(getConfig().get("spawns." + args[1] + ".world").toString());
-									int x = getConfig().getInt("spawns." + args[1] + ".X");
-									int y = getConfig().getInt("spawns." + args[1] + ".Y");
-									int z = getConfig().getInt("spawns." + args[1] + ".Z");
-									int yaw = getConfig().getInt("spawns." + args[1] + ".yaw");
-									int pitch = getConfig().getInt("spawns." + args[1] + ".pitch");
-									
-									if (world == null) {
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat world does not exist!"));
-									} else {
-										Location loc = new Location(world, x, y, z, yaw, pitch);
-										player.teleport(loc);
-									}
-								} else {
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat spawnpoint doesn't exist."));
-								}
-							}
-						} else {
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
-						}
-					} else {
-						sender.sendMessage("[MultiSpawnPlus] This command can only be run by a player");
-					}
-				//endregion
-				
-				//region Random
-				} else if (args[0].equalsIgnoreCase("random")) {
-					if (sender instanceof Player) {
-						Player player = (Player) sender;
-						String destination = "";
-						Boolean canTeleport = true;
-						
-						if (player.hasPermission("multispawnplus.random")) {
-							if (args.length < 2) {
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cPlease enter a spawn group."));
-								player.sendMessage("Usage: /msp random <spawn group>");
-							} else if (args.length > 2) {
-								player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cToo many arguments!"));
-								player.sendMessage("Usage: /msp random <spawn group>");
-							} else {
-								ArrayList<String> groupList = new ArrayList<String>();
-								for (int i = 0; i < allowed.length; i++) {
-									if (getConfig().getString("spawns." + allowed[i] + ".spawn-group").equalsIgnoreCase(args[1])) {
-										groupList.add(allowed[i]);
-									}
-								}
-								String[] group = groupList.toArray(new String[groupList.size()]);
-								
-								try {
-									Random rand = new Random();
-									destination = group[rand.nextInt(group.length)];
-								} catch (IllegalArgumentException err) {
-									player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThere are no spawn points "
-											+ "in that group!"));
-									canTeleport = false;
-								}
-								
-								if (canTeleport == true) {
-									World world = Bukkit.getWorld(getConfig().getString("spawns." + destination + ".world"));
-									double x = getConfig().getInt("spawns." + destination + ".X") + 0.5;
-									double y = getConfig().getInt("spawns." + destination + ".Y");
-									double z = getConfig().getInt("spawns." + destination + ".Z") + 0.5;
-									int yaw = getConfig().getInt("spawns." + destination + ".yaw");
-									int pitch = getConfig().getInt("spawns." + destination + ".pitch");
-									
-									getLogger().info("[MultiSpawnPlus] Teleporting " + player.getName() + " to " + destination
-											+ "(" + world + ", " + x + ", " + y + ", " + z + ", " + yaw + ", " + pitch + ")");
-									
-									if (world == null) {
-										player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cThat world does not exist!"));
-									} else {
-										Location loc = new Location(world, x, y, z, yaw, pitch);
-										player.teleport(loc);
-									}
-								}
-							}
-						} else {
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4You do not have permission to do this"));
-						}
-					} else {
-						sender.sendMessage("[MultiSpawnPlus] This command can only be run by a player");
-					}
-				//endregion
+				} else if (args[0].equalsIgnoreCase("teleport")
+						|| args[0].equalsIgnoreCase("tp")
+						|| args[0].equalsIgnoreCase("spawn")) {
+						getCommand("mspTP").execute(sender, label, aliasArgs(args));
 				
 				//region List
 				} else if (args[0].equalsIgnoreCase("list")) {

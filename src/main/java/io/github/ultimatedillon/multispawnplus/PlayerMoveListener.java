@@ -1,6 +1,5 @@
 package io.github.ultimatedillon.multispawnplus;
 
-import java.util.ArrayList;
 import java.util.Random;
 import java.util.Set;
 
@@ -63,7 +62,7 @@ public class PlayerMoveListener implements Listener {
 				    portal = portalLoc.getBlock();
 				    
 				    if (below.getLocation().toString().equalsIgnoreCase(portal.getLocation().toString())) {
-				    	Boolean canTeleport = true;
+				    	boolean canTeleport = true;
 						Bukkit.getLogger().info(player.getName() + " triggered the " + portals[i] + " portal!");
 						
 						boolean randVal = getConfig().getBoolean("portals." + portals[i] + ".random-target");
@@ -72,26 +71,7 @@ public class PlayerMoveListener implements Listener {
 							destination = getConfig().getString("portals." + portals[i] + ".destination");
 						} else {
 							blockGroup = getConfig().getString("portals." + portals[i] + ".spawn-group");
-							ArrayList<String> groupList = new ArrayList<String>();
-							
-							Set<String> spawns = getConfig().getConfigurationSection("spawns").getKeys(false);
-							ArrayList<String> allowed = new ArrayList<String>();
-							
-							for (String item : spawns) {
-								if (getConfig().getBoolean("spawns." + item + ".allow-random-spawn") == true) {
-									if (item != null && item != "null") {
-										allowed.add(item);
-									}
-								}
-							}
-							
-							for (String item : allowed) {
-								if (getConfig().getString("spawns." + item + ".spawn-group").equalsIgnoreCase(blockGroup)) {
-									groupList.add(item);
-								}
-							}
-							
-							String[] group = groupList.toArray(new String[groupList.size()]);
+							String[] group = plugin.getLocations(true, blockGroup);
 							
 							try {
 								Random rand = new Random();
